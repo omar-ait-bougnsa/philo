@@ -1,7 +1,4 @@
 #include "philosophers.h"
-#include <stdlib.h>
-#include <unistd.h>
-
 
 typedef struct t_philo
 {
@@ -12,8 +9,12 @@ typedef struct t_philo
     int indix;
     pthread_mutex_t *fork1;
     pthread_mutex_t *fork2;
-    int time;
+    struct timeval time;
+    int check_die;
+    int eat;
 } t_philo;
+
+
 int ft_atoi(char *str)
 {
     int i;
@@ -37,37 +38,45 @@ int ft_atoi(char *str)
     }
     return(nbr * a);
 }
+
 void check_philo(char **av ,t_data *data)
 {
     data->philo = ft_atoi(av[1]);
     data->die = ft_atoi(av[2]);
     data->eat = ft_atoi(av[3]);
     data->sleep = ft_atoi(av[4]);
-    if (data->philo <= 0)
+    if (data->philo <= 0 || data->die <= 0 || data->eat <= 0 || data->sleep <= 0)
     {
-        printf ("error\n");
+        printf ("invalid argument \n");
+        exit (1);
     }
 }
+
 void  taken_afork(t_philo *philo)
 {
      pthread_mutex_lock(philo->fork1);
-     
-        printf ("%d has taken a fork1\n", philo->indix);
-
-        pthread_mutex_lock(philo->fork2);
-        printf ("%d has taken a fork2\n", philo->indix);
-        printf ("%d is eating\n", philo->indix);
-        usleep(philo->time_eat * 1000);
-        pthread_mutex_unlock(philo->fork1);
-        pthread_mutex_unlock(philo->fork2); 
+    printf ("%d has taken a fork1\n",philo->indix);
+    pthread_mutex_lock(philo->fork2);
+    printf ("%d has taken a fork2\n", philo->indix);
+    printf ("%d is eating\n", philo->indix);
+    usleep(philo->time_eat * 1000); 
+    gettimeofday(&philo->time,NULL);
+    philo->eat = 1;
+    pthread_mutex_unlock(philo->fork1);
+    pthread_mutex_unlock(philo->fork2); 
         
 }
+
 void *ft_rotine(void *data)
 {
     t_philo *philo;
     philo = (t_philo*)data;
+     if (philo->indix % 2 == 1)
+            usleep(20);
     while (1)
     {
+        if (philo->check_die == 1)
+            break;
         taken_afork(philo);
         printf ("%d is sleeping\n", philo->indix);
         usleep(philo->time_sleep * 1000);
@@ -75,16 +84,19 @@ void *ft_rotine(void *data)
     }
     return (NULL);
 }
+
 void creat_pthread(t_philo *philo,t_data *data)
 {
     int i;
     i = 0;
     while (i < data->philo)
     {
+        //memset(&philo[i],0,sizeof(t_philo));
         philo[i].time_eat = data->eat;
         philo[i].time_sleep = data->sleep;
         philo[i].time_die = data->die;
         philo[i].fork1 = &data->forks[i];
+        philo[i].check_die = 0;
         if (i == 0)
             philo[i].fork2 = &data->forks[data->philo - 1];
         else 
@@ -94,6 +106,7 @@ void creat_pthread(t_philo *philo,t_data *data)
         i++;
     }
 }
+
 void creat_metex(t_data *data)
 {
     int i ;
@@ -108,21 +121,32 @@ int main(int ac, char **av)
 {
     t_data data;
     t_philo *philo;
-    if (ac != 5)
+    if (ac != 5 &&  ac != 4)
     {
         printf ("pleas 4 or 5 argument\n");
         return (0);
     }
-   check_philo(av ,&data);
+    check_philo(av ,&data);
     philo = malloc (data.philo * sizeof(t_philo));
     data.forks = malloc (data.philo * sizeof(pthread_mutex_t));
     creat_metex(&data);
     creat_pthread(philo,&data);
-    int i =0;
-    while (i < data.philo)
+    int i = 0;
+    while (1)
     {
-        pthread_join(philo[i].id,NULL);
-        printf("%d joined", i);
+        if (i == data.philo - 1)
+        {
+            i = 0;
+        }
+        gettimeofday(&data.time,NULL);
+        if (philo[i].eat == 1 && data.time.tv_usec - philo[i].time.tv_usec >= (data.die * 1000))
+        {
+           philo->check_die = 1;
+           printf("%ld time to eat\n",philo->time.tv_usec);
+           printf("%ld now_time\n",data.time.tv_usec);
+           printf("%d is die\n",philo[i].indix);
+            return(0);
+        }
         i++;
     }
     return 0;
