@@ -12,6 +12,7 @@ typedef struct t_philo
     struct timeval time;
     int check_die;
     int eat;
+    struct timeval time1;
 } t_philo;
 
 
@@ -54,11 +55,14 @@ void check_philo(char **av ,t_data *data)
 
 void  taken_afork(t_philo *philo)
 {
-     pthread_mutex_lock(philo->fork1);
-    printf ("%d has taken a fork1\n",philo->indix);
+    pthread_mutex_lock(philo->fork1);
+    gettimeofday(&philo->time1,NULL);
+    printf ("%ld %d has taken a fork1\n",(philo->time1.tv_usec / 1000),philo->indix);
     pthread_mutex_lock(philo->fork2);
-    printf ("%d has taken a fork2\n", philo->indix);
-    printf ("%d is eating\n", philo->indix);
+    gettimeofday(&philo->time1,NULL);
+    printf ("%ld %d has taken a fork2\n",(philo->time1.tv_usec / 1000), philo->indix);
+    printf ("%ld %d is eating\n",(philo->time1.tv_usec / 1000), philo->indix);
+   // gettimeofday(&philo->time,NULL);
     usleep(philo->time_eat * 1000); 
     gettimeofday(&philo->time,NULL);
     philo->eat = 1;
@@ -72,15 +76,17 @@ void *ft_rotine(void *data)
     t_philo *philo;
     philo = (t_philo*)data;
      if (philo->indix % 2 == 1)
-            usleep(20);
+            usleep(30);
     while (1)
     {
         if (philo->check_die == 1)
             break;
         taken_afork(philo);
-        printf ("%d is sleeping\n", philo->indix);
+        gettimeofday(&philo->time1,NULL);
+        printf ("%ld %d is sleeping\n",(philo->time1.tv_usec / 1000), philo->indix);
         usleep(philo->time_sleep * 1000);
-        printf ("%d is thinking\n",philo->indix);
+        gettimeofday(&philo->time1,NULL);
+        printf ("%ld %d is thinking\n",(philo->time1.tv_usec / 1000), philo->indix);
     }
     return (NULL);
 }
@@ -121,7 +127,7 @@ int main(int ac, char **av)
 {
     t_data data;
     t_philo *philo;
-    if (ac != 5 &&  ac != 4)
+    if (ac != 5 &&  ac != 6)
     {
         printf ("pleas 4 or 5 argument\n");
         return (0);
@@ -142,8 +148,6 @@ int main(int ac, char **av)
         if (philo[i].eat == 1 && data.time.tv_usec - philo[i].time.tv_usec >= (data.die * 1000))
         {
            philo->check_die = 1;
-           printf("%ld time to eat\n",philo->time.tv_usec);
-           printf("%ld now_time\n",data.time.tv_usec);
            printf("%d is die\n",philo[i].indix);
             return(0);
         }
