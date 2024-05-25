@@ -58,6 +58,12 @@ void  taken_afork(t_philo *philo)
     pthread_mutex_lock(philo->fork1);
     gettimeofday(&philo->time1,NULL);
     printf ("%ld %d has taken a fork1\n",(philo->time1.tv_usec / 1000),philo->indix);
+
+    if (philo->fork2 == NULL)
+    {
+        printf ("%ld %d is die\n",philo->time1.tv_usec / 1000,philo->indix);
+        exit (1);
+    }
     pthread_mutex_lock(philo->fork2);
     gettimeofday(&philo->time1,NULL);
     printf ("%ld %d has taken a fork2\n",(philo->time1.tv_usec / 1000), philo->indix);
@@ -76,7 +82,7 @@ void *ft_rotine(void *data)
     t_philo *philo;
     philo = (t_philo*)data;
      if (philo->indix % 2 == 1)
-            usleep(30);
+            usleep(10);
     while (1)
     {
         if (philo->check_die == 1)
@@ -103,10 +109,12 @@ void creat_pthread(t_philo *philo,t_data *data)
         philo[i].time_die = data->die;
         philo[i].fork1 = &data->forks[i];
         philo[i].check_die = 0;
-        if (i == 0)
-            philo[i].fork2 = &data->forks[data->philo - 1];
+        if (i == data->philo - 1)
+            philo[i].fork2 = &data->forks[0];
+        else if (data->philo < 1)
+            philo[i].fork2 = &data->forks[i + 1];
         else 
-            philo[i].fork2 = &data->forks[i - 1];
+            philo[i].fork2 = NULL;
         philo[i].indix = i;
         pthread_create(&philo[i].id,NULL,ft_rotine,&philo[i]);
         i++;
