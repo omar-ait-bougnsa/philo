@@ -3,17 +3,31 @@
 #include <stdlib.h>
 
 #include <stdio.h>
-#include <pthread.h>
-
-void *thread_func(void *arg) {
-    pthread_t tid = *((pthread_t*)arg); // Typecast arg to pthread_t pointer and dereference it
-    printf("Thread ID: %lu\n", tid); // Assuming pthread_t is unsigned long
-    return NULL;
-}
+#include <sys/time.h>
+#include <unistd.h>
 
 int main() {
-    pthread_t thread;
-    pthread_create(&thread, NULL, thread_func, (void*)&thread); // Pass thread ID as argument
-    pthread_join(thread, NULL);
+    struct timeval start, end;
+
+    // Start time
+    gettimeofday(&start, NULL);
+    while(1)
+    {
+    
+
+    // Do some work or sleep
+    usleep(50); // Sleep for 500 microseconds
+
+    // End time
+    gettimeofday(&end, NULL);
+    usleep(50000);
+    // Calculate the difference in microseconds
+    long seconds = end.tv_sec;
+    long microseconds = end.tv_usec - start.tv_usec;
+    long elapsed = seconds * 1000 + microseconds / 1000;
+
+    printf("Elapsed time: %ld microseconds\n", seconds);
+    }
+
     return 0;
 }

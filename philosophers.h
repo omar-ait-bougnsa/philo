@@ -15,5 +15,6 @@ typedef struct data
     int sleep;
     int philo;
     int die;
-    struct timeval time;
+    int time_to_eat;
+    long time;
 } t_data;

@@ -9,12 +9,15 @@ typedef struct t_philo
     int indix;
     pthread_mutex_t *fork1;
     pthread_mutex_t *fork2;
-    struct timeval time;
+    long time;
+    long time3;
     int check_die;
     int eat;
     struct timeval time1;
+    struct timeval time2;
+    int time_to_eat;
+    long tm;
 } t_philo;
-
 
 int ft_atoi(char *str)
 {
@@ -46,35 +49,46 @@ void check_philo(char **av ,t_data *data)
     data->die = ft_atoi(av[2]);
     data->eat = ft_atoi(av[3]);
     data->sleep = ft_atoi(av[4]);
+    data->time_to_eat = 0;
+    if (av[5] != NULL)
+        {
+            data->time_to_eat = ft_atoi(av[5]);
+            if (data->time_to_eat == 0)
+            {
+                printf ("invalid argument \n");
+                exit (1);
+            }
+        }
     if (data->philo <= 0 || data->die <= 0 || data->eat <= 0 || data->sleep <= 0)
     {
         printf ("invalid argument \n");
         exit (1);
     }
 }
-
+long  ft_gettime()
+{
+    long tm;
+    struct timeval time;
+    gettimeofday(&time,NULL);
+    tm = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+    return(tm);
+}
 void  taken_afork(t_philo *philo)
 {
     pthread_mutex_lock(philo->fork1);
-    gettimeofday(&philo->time1,NULL);
-    printf ("%ld %d has taken a fork1\n",(philo->time1.tv_usec / 1000),philo->indix);
-
-    if (philo->fork2 == NULL)
-    {
-        printf ("%ld %d is die\n",philo->time1.tv_usec / 1000,philo->indix);
-        exit (1);
-    }
+    philo->tm = ft_gettime();
+    printf ("%ld %d has taken a fork\n",philo->tm - philo->time3,philo->indix);
     pthread_mutex_lock(philo->fork2);
-    gettimeofday(&philo->time1,NULL);
-    printf ("%ld %d has taken a fork2\n",(philo->time1.tv_usec / 1000), philo->indix);
-    printf ("%ld %d is eating\n",(philo->time1.tv_usec / 1000), philo->indix);
-   // gettimeofday(&philo->time,NULL);
+     philo->tm = ft_gettime();
+    printf ("%ld %d has taken a fork\n",philo->tm - philo->time3, philo->indix);
+    philo->time = ft_gettime();
+    printf ("\033[31m%ld %d is eating\n\033[0m",philo->tm - philo->time3, philo->indix);
+    philo->time_eat++;
     usleep(philo->time_eat * 1000); 
-    gettimeofday(&philo->time,NULL);
+    philo->time = ft_gettime();
     philo->eat = 1;
     pthread_mutex_unlock(philo->fork1);
     pthread_mutex_unlock(philo->fork2); 
-        
 }
 
 void *ft_rotine(void *data)
@@ -82,17 +96,18 @@ void *ft_rotine(void *data)
     t_philo *philo;
     philo = (t_philo*)data;
      if (philo->indix % 2 == 1)
-            usleep(10);
+            usleep(20);
+    philo->time3 = ft_gettime();
     while (1)
     {
         if (philo->check_die == 1)
             break;
         taken_afork(philo);
-        gettimeofday(&philo->time1,NULL);
-        printf ("%ld %d is sleeping\n",(philo->time1.tv_usec / 1000), philo->indix);
+        philo->tm = ft_gettime();
+        printf ("%ld %d is sleeping\n",philo->tm - philo->time3, philo->indix);
         usleep(philo->time_sleep * 1000);
-        gettimeofday(&philo->time1,NULL);
-        printf ("%ld %d is thinking\n",(philo->time1.tv_usec / 1000), philo->indix);
+        philo->tm = ft_gettime();
+        printf ("%ld %d is thinking\n",philo->tm - philo->time3, philo->indix);
     }
     return (NULL);
 }
@@ -103,18 +118,17 @@ void creat_pthread(t_philo *philo,t_data *data)
     i = 0;
     while (i < data->philo)
     {
-        //memset(&philo[i],0,sizeof(t_philo));
+        memset(&philo[i],0,sizeof(t_philo));
         philo[i].time_eat = data->eat;
         philo[i].time_sleep = data->sleep;
         philo[i].time_die = data->die;
         philo[i].fork1 = &data->forks[i];
         philo[i].check_die = 0;
+        philo[i].check_die = 0;
         if (i == data->philo - 1)
             philo[i].fork2 = &data->forks[0];
-        else if (data->philo < 1)
-            philo[i].fork2 = &data->forks[i + 1];
         else 
-            philo[i].fork2 = NULL;
+            philo[i].fork2 = &data->forks[i + 1];
         philo[i].indix = i;
         pthread_create(&philo[i].id,NULL,ft_rotine,&philo[i]);
         i++;
@@ -152,12 +166,20 @@ int main(int ac, char **av)
         {
             i = 0;
         }
-        gettimeofday(&data.time,NULL);
-        if (philo[i].eat == 1 && data.time.tv_usec - philo[i].time.tv_usec >= (data.die * 1000))
+        data.time = ft_gettime();
+       // printf(" new time %ld\n",data.time);
+      //printf("lest time to eat %ld\n",data.time - philo[i].time);
+        if (philo[i].eat == 1 && data.time - philo[i].time >= data.die)
         {
            philo->check_die = 1;
-           printf("%d is die\n",philo[i].indix);
-            return(0);
+           printf("%ld %d died\n",data.time - philo[i].time3,philo[i].indix);
+           usleep(20);
+           return(0);
+        }
+        if (data.time_to_eat != 0)
+        {
+            if (philo[1].time_to_eat >= data.time_to_eat)
+                exit(1);
         }
         i++;
     }
