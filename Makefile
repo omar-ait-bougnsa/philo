@@ -1,15 +1,16 @@
 NAME = philo
 CC = cc 
-FLAGS = -Wall -Wextra -Werror 
-RSC = philo.c
+FLAGS = -Wall -Wextra -Werror  -pthread -g -fsanitize=thread
+RSC = philo.c 
 OBJ = $(RSC:.c=.o)
 
 all : $(NAME)
 
-$(NAME): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) -o $(NAME) 
 %.o: %.c
 	$(CC) $(FLAGS) -c $< -o $@
+
+$(NAME): $(OBJ)
+	$(CC) $(FLAGS) $(OBJ) -o $(NAME) 
 
 clean:
 	rm -f $(OBJ)
