@@ -1,7 +1,7 @@
 NAME = philo
 CC = cc 
 FLAGS = -Wall -Wextra -Werror  -pthread  -g -fsanitize=thread
-RSC = philo.c monitur.c  philo_utilis.c
+RSC = philo.c monitur.c  philo_utilis.c routine.c
 OBJ = $(RSC:.c=.o)
 
 all : $(NAME)

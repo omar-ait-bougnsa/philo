@@ -55,3 +55,5 @@ void	check_philo(char **av, t_data *data);
 void	ft_sleep(long time);
 long	ft_gettime(void);
 int	print_status(t_philo *philo, char *status);
+void	taken_afork(t_philo *philo);
+void	*ft_rotine(void *data);
