@@ -39,6 +39,7 @@ typedef struct data
     int die;
     int cheak_die;
     int time_to_eat;
+    int nbr_to_eat;
     long time;
     long start_time;
     int ready;
@@ -46,5 +47,11 @@ typedef struct data
     pthread_mutex_t mutex;
     pthread_mutex_t eat_lock;
     pthread_mutex_t mutex_time;
+     pthread_mutex_t mutex_time1;
 } t_data;
-void *moniture (void *data1);
+
+void tf_moniture(t_data *data);
+void	check_philo(char **av, t_data *data);
+void	ft_sleep(long time);
+long	ft_gettime(void);
+int	print_status(t_philo *philo, char *status);
